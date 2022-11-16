@@ -28,10 +28,11 @@ class SVM():
 
         for _ in range(self.T):
             X, y = self.shuffle_data(self.X, self.y)
-            for i, row in enumerate(X):
+            for i, row in zip(enumerate(X),y):
                 # fold bias into vector
                 b_row = row + [self.bias]
-                
+                if y[i] * b_row <= 1:
+                    
                 prediction = self.predict_single(b_row, self.weights)
                 if y[i] != prediction:
                     #update weights
