@@ -31,7 +31,10 @@ class SVM():
             for i, row in zip(enumerate(X),y):
                 # fold bias into vector
                 b_row = row + [self.bias]
-                if y[i] * b_row <= 1:
+                x = self.scalar_by_vec(y[i], self.dot_product(self.weights, b_row)) # y*w*x
+                if  x <= 1:
+                    self.weights = self.update(y[i], b_row, self.weights)
+                else:
                     
                 prediction = self.predict_single(b_row, self.weights)
                 if y[i] != prediction:
@@ -39,3 +42,22 @@ class SVM():
                     self.weights = self.update(y[i], b_row, self.weights)
                  
         return self.weights
+
+    def scalar_by_vec(self, s,v):
+        vec = []
+        for x in v:
+            vec.append(s*x)
+        return vec
+
+    def dot_product(self, a,b):
+        result = 0
+        for x, y in zip(a,b):
+            result += (x * y)
+        return result
+    def update(self, y, X_i, weights):
+        updated = []
+
+        for i in range(len(weights)):
+            updated.append(weights[i] + self.learning_rate * y * X_i[i])
+
+        return updated
