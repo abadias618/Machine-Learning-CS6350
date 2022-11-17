@@ -1,10 +1,13 @@
 import random
 
 class SVM():
-    def __init__(self, X, y, T, bias=0, learning_rate=1e-5):
+    def __init__(self, X, y, T, C, bias=0, learning_rate=1e-5):
         self.X = X
         self.y = y
         self.T = T
+        self.C = C
+        self.N = len(self.X)
+        self.initial_weights = self.initialize_weights(len(self.X[0]))
         self.weights = self.initialize_weights(len(self.X[0]))
         self.bias = bias
         self.learning_rate = learning_rate
@@ -35,11 +38,17 @@ class SVM():
                 if  x <= 1:
                     self.weights = self.update(y[i], b_row, self.weights)
                 else:
-                    
+                    x
                 prediction = self.predict_single(b_row, self.weights)
                 if y[i] != prediction:
                     #update weights
-                    self.weights = self.update(y[i], b_row, self.weights)
+                    self.weights = self.update(y[i],
+                                                b_row,
+                                                self.weights,
+                                                self.initial_weights,
+                                                self.learning_rate,
+                                                self.C,
+                                                self.N)
                  
         return self.weights
 
@@ -54,9 +63,11 @@ class SVM():
         for x, y in zip(a,b):
             result += (x * y)
         return result
-    def update(self, y, X_i, weights):
-        updated = []
 
+    def update(self, y_i, X_i, weights, initial_weights, learning_rate, C, N):
+        updated = []
+        a = self.scalar_by_vec(learning_rate, initial_weights + [0]) # fold bias into W_0
+        b = self.scalar_by_vec((learning_rate * C * N * y_i ), X_i)
         for i in range(len(weights)):
             updated.append(weights[i] + self.learning_rate * y * X_i[i])
 
