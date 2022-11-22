@@ -31,25 +31,18 @@ class SVM():
 
         for _ in range(self.T):
             X, y = self.shuffle_data(self.X, self.y)
-            for i, row in zip(enumerate(X),y):
+            for i, row in enumerate(X):
                 # fold bias into vector
                 b_row = row + [self.bias]
-                x = self.scalar_by_vec(y[i], self.dot_product(self.weights, b_row)) # y*w*x
+                x = y[i] * self.dot_product(self.weights, b_row) # y*w*x
                 if  x <= 1:
-                    self.weights = self.update(y[i], b_row, self.weights)
-                else:
-                    x
-                prediction = self.predict_single(b_row, self.weights)
-                if y[i] != prediction:
-                    #update weights
-                    self.weights = self.update(y[i],
-                                                b_row,
-                                                self.weights,
-                                                self.initial_weights,
-                                                self.learning_rate,
-                                                self.C,
+                    self.weights = self.update(y[i], b_row,
+                                                self.weights, self.initial_weights,
+                                                self.learning_rate, self.C,
                                                 self.N)
-                 
+                else:
+                    self.initial_weights = self.update_initial_weights(self.initial_weights, self.learning_rate)
+                           
         return self.weights
 
     def scalar_by_vec(self, s,v):
@@ -69,6 +62,25 @@ class SVM():
         a = self.scalar_by_vec(learning_rate, initial_weights + [0]) # fold bias into W_0
         b = self.scalar_by_vec((learning_rate * C * N * y_i ), X_i)
         for i in range(len(weights)):
-            updated.append(weights[i] + self.learning_rate * y * X_i[i])
+            updated.append(weights[i] - a[i] + b[i])
 
         return updated
+    
+    def update_initial_weights(self, initial_weights, learning_rate):
+        s = 1 - learning_rate
+        return self.scalar_by_vec(s, initial_weights)
+    
+    def sgn(self, x):
+            if x <= 0:
+                return -1
+            else:
+                return 1
+
+    def predict(self, X):
+        predictions = []
+        for row in X:
+            b_row = row + [self.bias]
+            dot = self.dot_product(b_row, self.weights)
+            predictions.append(self.sgn(dot))
+
+        return predictions

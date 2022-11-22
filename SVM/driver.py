@@ -1,5 +1,6 @@
 import sys
 import csv
+from ssgd_SVM import *
 
 def read_data(file_name):
     """Returns 2D list with int csv data"""
@@ -46,11 +47,13 @@ if __name__ == '__main__':
     train_file = sys.argv[1]
     test_file = sys.argv[2]
     type_of_svm = sys.argv[3]
-    # stochastic sub-gradient descent -> ssgd
+    constant = sys.argv[4]
+    epochs = sys.argv[5]
+    learning_rate = sys.argv[6]
+    
     # dual SVM
     # Gaussian Kernel
     # Kernel Perceptron
-
 
     raw_train = read_data(train_file)
     raw_test = read_data(test_file)
@@ -61,5 +64,11 @@ if __name__ == '__main__':
     X_train, y_train = split_features_labels(train)
     X_test, y_test = split_features_labels(test)
 
-    print(len(X_train), len(y_train))
-    print(len(X_test), len(y_test))
+    # stochastic sub-gradient descent -> ssgd
+    if type_of_svm == "ssgd":
+        svm = SVM(X_train, y_train, 100, 500/873, learning_rate=0.5)
+        weights = svm.train()
+        print(*weights)
+        predictions = svm.predict(X_test)
+        err, _ = average_prediction_error(predictions, y_test)
+        print("err",err)
