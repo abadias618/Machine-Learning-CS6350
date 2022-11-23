@@ -1,6 +1,8 @@
 import sys
 import csv
+import matplotlib.pyplot as plt
 from ssgd_SVM import *
+from dual_domain_SVM import *
 
 def read_data(file_name):
     """Returns 2D list with int csv data"""
@@ -47,9 +49,9 @@ if __name__ == '__main__':
     train_file = sys.argv[1]
     test_file = sys.argv[2]
     type_of_svm = sys.argv[3]
-    constant = sys.argv[4]
-    epochs = sys.argv[5]
-    learning_rate = sys.argv[6]
+    #constant = sys.argv[4]
+    #epochs = sys.argv[5]
+    #learning_rate = sys.argv[6]
     
     # dual SVM
     # Gaussian Kernel
@@ -66,9 +68,35 @@ if __name__ == '__main__':
 
     # stochastic sub-gradient descent -> ssgd
     if type_of_svm == "ssgd":
-        svm = SVM(X_train, y_train, 100, 500/873, learning_rate=0.5)
-        weights = svm.train()
+        training = []
+        testing = []
+        C = [100/873, 500/873, 700/873]
+        C_string = ["100/873", "500/873", "700/873"]
+        schedule_params = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+        #schedule_params = [0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01]
+        for param in schedule_params:
+            print("gamma",param)
+            for i, c in enumerate(C):
+                svm = SVM(X_train, y_train, 100, c, learning_rate=param)
+                weights = svm.train()
+                train_predictions = svm.predict(X_train)
+                err, _ = average_prediction_error(train_predictions, y_train)
+                training.append(err)
+                print("training err",err, "with C:",C_string[i])
+                predictions = svm.predict(X_test)
+                err, _ = average_prediction_error(predictions, y_test)
+                testing.append(err)
+                print("testing err",err, "with C:",C_string[i])
+        plt.plot(training, label="training")
+        plt.plot(testing, label="testing")
+        plt.legend()
+        plt.savefig('comparison2.png')
+
+    if type_of_svm == "dual":
+        dual_svm = dual_SVM(X_train, y_train, 1, 100/873, learning_rate=0.5)
+        weights = dual_svm.train()
         print(*weights)
-        predictions = svm.predict(X_test)
-        err, _ = average_prediction_error(predictions, y_test)
-        print("err",err)
+        predictions = dual_svm.predict(X_test)
+        print("predictions", predictions)
+        #err, _ = average_prediction_error(predictions, y_test)
+        #print("err",err)

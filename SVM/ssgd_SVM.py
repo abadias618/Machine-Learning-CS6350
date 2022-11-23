@@ -11,7 +11,13 @@ class SVM():
         self.weights = self.initialize_weights(len(self.X[0]))
         self.bias = bias
         self.learning_rate = learning_rate
+
+    def schedule_1(self, gamma):
+        return
     
+    def schedule_1(self, gamma):
+        return
+
     def initialize_weights(self, length_of_row):
         weights = []
         for i in range(length_of_row):
