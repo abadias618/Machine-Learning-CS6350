@@ -1,7 +1,7 @@
 import random
 
 class SVM():
-    def __init__(self, X, y, T, C, bias=0, learning_rate=1e-5):
+    def __init__(self, X, y, T, C, bias=0, gamma=0.05, a = 0.02, schedule=1):
         self.X = X
         self.y = y
         self.T = T
@@ -10,13 +10,15 @@ class SVM():
         self.initial_weights = self.initialize_weights(len(self.X[0]))
         self.weights = self.initialize_weights(len(self.X[0]))
         self.bias = bias
-        self.learning_rate = learning_rate
+        self.gamma = gamma
+        self.a = a
+        self.schedule = self.schedule_1 if schedule == 1 else self.schedule_2
 
-    def schedule_1(self, gamma):
-        return
+    def schedule_1(self, t):
+        return self.gamma / (1 + ((self.gamma/self.a) * t))
     
-    def schedule_1(self, gamma):
-        return
+    def schedule_2(self, t):
+        return self.gamma / (1 + t)
 
     def initialize_weights(self, length_of_row):
         weights = []
@@ -35,7 +37,7 @@ class SVM():
         # fold bias into weights
         self.weights = self.weights + [self.bias]
 
-        for _ in range(self.T):
+        for t in range(self.T):
             X, y = self.shuffle_data(self.X, self.y)
             for i, row in enumerate(X):
                 # fold bias into vector
@@ -44,7 +46,7 @@ class SVM():
                 if  x <= 1:
                     self.weights = self.update(y[i], b_row,
                                                 self.weights, self.initial_weights,
-                                                self.learning_rate, self.C,
+                                                self.schedule(t+1), self.C,
                                                 self.N)
                 else:
                     self.initial_weights = self.update_initial_weights(self.initial_weights, self.learning_rate)
