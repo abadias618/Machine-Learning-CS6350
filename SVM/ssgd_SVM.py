@@ -49,7 +49,7 @@ class SVM():
                                                 self.schedule(t+1), self.C,
                                                 self.N)
                 else:
-                    self.initial_weights = self.update_initial_weights(self.initial_weights, self.learning_rate)
+                    self.initial_weights = self.update_initial_weights(self.initial_weights, self.schedule(t+1))
                            
         return self.weights
 

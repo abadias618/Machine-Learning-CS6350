@@ -11,6 +11,8 @@ class dual_SVM():
         self.N = len(self.X)
         self.weights = self.initialize_weights(len(self.X[0]))
         self.alpha = None
+        self.b_star = None
+        self.w_star = None
         self.bias = bias
 
     def initialize_weights(self, length_of_row):
@@ -28,6 +30,20 @@ class dual_SVM():
         aa = alphas.dot(alphas.T)
         return 0.5*np.sum(aa*xxyy) - np.sum(alphas)
 
+    def recover_w_and_bias(self, X, y, a_star, C):
+        print("X",X,"y",y,"a_star",a_star,"C",C)
+        w_star = (a_star * y).dot(X)
+        self.w_star = w_star
+
+        j_1 = a_star > 0.000001
+        j_2 = a_star < C - 0.000001
+        j = np.logical_and(j_1, j_2)
+        b_star = y[j] - w_star.dot(X[j, :].T)
+        b_star = b_star.mean()
+        self.b_star = b_star
+
+        return w_star, b_star
+
     def train(self):
         X, y = np.asarray(self.X), np.asarray(self.y)
         yy = y.reshape(-1,1).dot(y.reshape(-1,1).T)
@@ -41,16 +57,17 @@ class dual_SVM():
                             args = (xxyy), method = "SLSQP",
                             bounds=boundaries,
                             constraints=constraints,
-                            options={"maxiter":10})
-        self.alpha = a_star.x
-        print(a_star.fun)
-        print(a_star.success)
-        print(a_star.x)
-        print(a_star.status)
-        return a_star
+                            options={"maxiter":10000})
+        self.a_star = a_star.x
+        print("fun",a_star.fun)
+        print("success",a_star.success)
+        print("x",a_star.x)
+        print("status",a_star.status)
+        w, b = self.recover_w_and_bias(X, y, self.a_star, self.C)
+        return w, b
         
     def predict(self, X):
         X = np.asarray(X)
-        p = np.asarray(self.weights).dot(X.T) + self.bias >= 0
+        p = np.asarray(self.w_star).dot(X.T) + self.bias >= 0
         p = p * 2 - 1
         return p
