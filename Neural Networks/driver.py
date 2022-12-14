@@ -81,37 +81,102 @@ if __name__ == '__main__':
             print("testing error",w,"error:",round(average_prediction_error(preds,y_test)[0],3))
     
     elif type_of_nn == "ReLU":
-        width = 5
-        depth = 3
-        activation =(lambda: torch.nn.ReLU())
-        layers = []
-        for l in [activation(), torch.nn.Linear(width, width)]:
-            for _ in range(depth - 2):
-                layers.append(l)
-        print("layers",layers)
-        model = torch.nn.Sequential(
-            torch.nn.Linear(4, width),
-            *layers,
-            activation(),
-            torch.nn.Linear(width, 1)
-        )
+        #make datasets Tensor datasets
+        activation = "ReLU"
+        T = 100
+        for i in range(len(X_train)):
+            X_train[i] = torch.Tensor(X_train[i])
+            y_train[i] = torch.Tensor([y_train[i]])
+        for i in range(len(X_test)):
+            X_test[i] = torch.Tensor(X_test[i])
+            y_test[i] = torch.Tensor([y_test[i]])
 
-        def init_weights(m):
-            if isinstance(m, torch.nn.Linear):
-                if activation == "ReLU":
-                    torch.nn.init.kaiming_normal_(m.weight)
-                else:
-                    torch.nn.init.xavier_uniform_(m.weight)
-                m.bias.data.fill_(0.01)
-        model.apply(init_weights)
+        for depth in [3,5,9]:
+            for width in [5,10,25,50,100]:
+                make_activation = (lambda: torch.nn.ReLU())
+                model = torch.nn.Sequential(
+                    torch.nn.Linear(4, width),
+                    *[layer for _ in range(depth - 2) for layer in [make_activation(), torch.nn.Linear(width, width)]],
+                    make_activation(),
+                    torch.nn.Linear(width, 1)
+                )
 
-        loss_fn = torch.nn.MSELoss(reduction="sum")
-        optimizer = torch.optim.Adam(model.parameters())
+                def init_weights(m):
+                    if isinstance(m, torch.nn.Linear):
+                        torch.nn.init.kaiming_normal_(m.weight)
+                        m.bias.data.fill_(0.01)
+                model.apply(init_weights)
 
-        for _ in range(1):
-            for x, y in train:
-                y_pred = model(x)
-                loss = loss_fn(y_pred, y)
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                loss_fn = torch.nn.MSELoss(reduction="sum")
+                optimizer = torch.optim.Adam(model.parameters())
+
+                for _ in range(T):
+                    for x, y in zip(X_train, y_train):
+                        y_pred = model(x)
+                        loss = loss_fn(y_pred, y)
+                        optimizer.zero_grad()
+                        loss.backward()
+                        optimizer.step()
+
+                def predict(X, y):
+                    predictions = []
+                    for x, y_ in zip(X, y):
+                        y_pred = -1 if model(x)[0] < 0 else 1
+                        predictions.append(y_pred)
+                    return predictions
+                    
+                print("depth:", depth, "width:",width)
+                print("Training error:",round(average_prediction_error(y_train, predict(X_train, y_train))[0], 3))
+                print("Testing error:",round(average_prediction_error(y_test, predict(X_test, y_test))[0], 3))
+                print()
+
+    elif type_of_nn == "Tanh":
+        activation = "tanh"
+        T = 100
+        #make datasets Tensor datasets
+        for i in range(len(X_train)):
+            X_train[i] = torch.Tensor(X_train[i])
+            y_train[i] = torch.Tensor([y_train[i]])
+        for i in range(len(X_test)):
+            X_test[i] = torch.Tensor(X_test[i])
+            y_test[i] = torch.Tensor([y_test[i]])
+
+        for depth in [3,5,9]:
+            for width in [5,10,25,50,100]:
+                make_activation = (lambda: torch.nn.Tanh())
+                model = torch.nn.Sequential(
+                    torch.nn.Linear(4, width),
+                    *[layer for _ in range(depth - 2) for layer in [make_activation(), torch.nn.Linear(width, width)]],
+                    make_activation(),
+                    torch.nn.Linear(width, 1)
+                )
+
+                def init_weights(m):
+                    if isinstance(m, torch.nn.Linear):    
+                        torch.nn.init.xavier_uniform_(m.weight)
+                        m.bias.data.fill_(0.01)
+
+                model.apply(init_weights)
+
+                loss_fn = torch.nn.MSELoss(reduction="sum")
+                optimizer = torch.optim.Adam(model.parameters())
+
+                for _ in range(T):
+                    for x, y in zip(X_train, y_train):
+                        y_pred = model(x)
+                        loss = loss_fn(y_pred, y)
+                        optimizer.zero_grad()
+                        loss.backward()
+                        optimizer.step()
+
+                def predict(X, y):
+                    predictions = []
+                    for x, y_ in zip(X, y):
+                        y_pred = -1 if model(x)[0] < 0 else 1
+                        predictions.append(y_pred)
+                    return predictions
+
+                print("depth:", depth, "width:",width)
+                print("Training error:",round(average_prediction_error(y_train, predict(X_train, y_train))[0], 3))
+                print("Testing error:",round(average_prediction_error(y_test, predict(X_test, y_test))[0], 3))
+                print()
